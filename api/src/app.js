@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import coursRouter from './routes/cours.js';
+import travauxRouter from './routes/travaux.js';
 
 const app =  express();
 
