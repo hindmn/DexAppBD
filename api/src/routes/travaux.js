@@ -2,6 +2,10 @@ import { Router } from "express";
 import pool from '../bd.js';
 const travauxRouter = Router();
 
+function erreur(res, code, message) {
+    return res.status(code).json({ erreurs: [message] });
+}
+
 travauxRouter.get('/', async (req, res) => {
     const cours = (req.query.cours ?? '').trim();
     let sql = 'SELECT tr.id, tr.cours_id, tr.titre, tr.type, tr.remise, cs.titre AS cours_titre '
