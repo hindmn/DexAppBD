@@ -11,6 +11,9 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use('/api/cours', coursRouter);
+app.use('/api/travaux', travauxRouter);
+
 app.use((req, res) => {
     res.status(404).json({ erreurs: ['Route introuvable.']});
 });
