@@ -21,4 +21,17 @@ travauxRouter.get('/', async (req, res) => {
     res.json(lignes);
 });
 
+travauxRouter.get('/:id', async (req, res) => {
+    const id = req.params.id;
+    const [travaux] = await pool.execute('SELECT tr.*, cs.titre AS cours_titre '
+        + 'FROM travaux tr JOIN cours cs ON cs.id = tr.cours_id '
+        + 'WHERE tr.id = ?', [id]
+    );
+    if(travaux.length === 0){ return erreur(res, 404, 'Travail introuvable.');  }
+    const travail = travaux[0];
+    const [creneaux] = await pool.execute('SELECT id, debut, fin FROM creneaux WHERE travail_id = ? ORDER BY debut', [id]);
+    
+    res.json({...travail, ouvert: Boolean(travail.ouvert), creneaux});
+});
+
 export default travauxRouter;
