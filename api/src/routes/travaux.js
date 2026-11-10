@@ -6,6 +6,7 @@ function erreur(res, code, message) {
     return res.status(code).json({ erreurs: [message] });
 }
 
+//ROUTE 2
 travauxRouter.get('/', async (req, res) => {
     const cours = (req.query.cours ?? '').trim();
     let sql = 'SELECT tr.id, tr.cours_id, tr.titre, tr.type, tr.remise, cs.titre AS cours_titre '
@@ -21,6 +22,8 @@ travauxRouter.get('/', async (req, res) => {
     res.json(lignes);
 });
 
+
+//ROUTE 3
 travauxRouter.get('/:id', async (req, res) => {
     const id = req.params.id;
     const [travaux] = await pool.execute('SELECT tr.*, cs.titre AS cours_titre '
@@ -33,5 +36,8 @@ travauxRouter.get('/:id', async (req, res) => {
     
     res.json({...travail, ouvert: Boolean(travail.ouvert), creneaux});
 });
+
+//ROUTE 4
+
 
 export default travauxRouter;
