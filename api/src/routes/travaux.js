@@ -38,6 +38,28 @@ travauxRouter.get('/:id', async (req, res) => {
 });
 
 //ROUTE 4
-
+travauxRouter.get('/:id/disponibilites', async(req, res) => {
+    const id = req.params.id;
+    const [travaux] = await pool.execute('SELECT id FROM travaux WHERE id = ?', [id]);
+    if(travaux.length === 0){
+        return erreur(res, 404, 'Travail introuvable');
+    }
+    const [creneaux] = await pool.execute('SELECT id, debut, fin FROM creneaux WHERE travail_id = ? ORDER BY debut', [id]);
+    const [disponibilites] = await pool.execute('SELECT creneau_id, matricule, nom FROM disponibilites WHERE travail_id = ? ORDER BY nom',
+        [id]
+    );
+    const result = creneaux.map((c) => { 
+        const etudiants = disponibilites.filter((dispo) => dispo.creneau_id === c.id)
+        .map((dispo) => ({matricule: dispo.matricule, nom: dispo.nom}));
+        return { creneauId: c.id,
+            debut: c.debut,
+            fin: c.fin,
+            nombre: etudiants.length,
+            noms: etudiants.map((e) => e.nom),
+            etudiants   
+        };
+    });
+    res.json(result);
+});
 
 export default travauxRouter;
