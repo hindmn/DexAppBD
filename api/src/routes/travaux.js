@@ -1,5 +1,9 @@
 import { Router } from "express";
 import pool from '../bd.js';
+import { exigerConnexion } from "../middlewares/authentification.js";
+import { findTravail } from "../verifications.js";
+import { readDate, readDateHour } from "../validation.js";
+
 const travauxRouter = Router();
 
 function erreur(res, code, message) {
@@ -75,50 +79,98 @@ travauxRouter.put('/:id/disponibilites/:matricule', async (req, res) => {
     const matricule = (req.params.matricule ?? '').trim();
     const nom = typeof req.body.nom === 'string' ? req.body.nom.trim() : '';
     let creneaux = req.body.creneaux;
-    if(matricule === ''){
+    if (matricule === '') {
         erreurs.push('Veuillez inscrire la matricule.')
-    }else if(matricule.length > 20){
+    } else if (matricule.length > 20) {
         erreurs.push('La matricule ne doit pas dépasser 20 caractères.');
     }
-    if(nom === ''){
+    if (nom === '') {
         erreurs.push('Veuillez inscrire le nom.')
-    }else if(nom.length > 100){
+    } else if (nom.length > 100) {
         erreurs.push('Le nom ne doit pas dépasser 100 caractères.')
     }
-    if(!Array.isArray(creneaux)) {
+    if (!Array.isArray(creneaux)) {
         creneaux = [];
     }
     creneaux = [...new Set(creneaux)];
-    if(creneaux.length === 0){
+    if (creneaux.length === 0) {
         erreurs.push('Veuillez sélectionner au moins 1 créneau.');
     }
     const [lignesCreneaux] = await pool.execute('SELECT id FROM creneaux WHERE travail_id = ?', [id]);
     const idCreneaux = lignesCreneaux.map((c) => c.id);
-    for(const c of creneaux){
-        if(!idCreneaux.includes(c)){
+    for (const c of creneaux) {
+        if (!idCreneaux.includes(c)) {
             erreurs.push('Un des créneaux sélectionné est invalide.');
             break;
         }
     }
-    if(erreurs.length > 0){ return res.status(400).json({erreurs}); }
+    if (erreurs.length > 0) { return res.status(400).json({ erreurs }); }
     const connect = await pool.getConnection();
-    try{
+    try {
         await connect.beginTransaction();
         await connect.execute('DELETE FROM disponibilites WHERE travail_id = ? AND matricule = ?',
             [id, matricule]
         );
-        for(const c of creneaux){
+        for (const c of creneaux) {
             await connect.execute('INSERT INTO disponibilites (travail_id, creneau_id, matricule, nom) VALUES (?, ?, ?, ?)',
                 [id, c, matricule, nom]
             );
         }
         await connect.commit();
-    }catch(err){
+    } catch (err) {
         await connect.rollback();
         throw err;
-    }finally{
+    } finally {
         connect.release();
     }
     res.status(204).end();
 });
+
+travauxRouter.put('/:id', exigerConnexion, async (req, res) => {
+    const id = req.params.id;
+    const travail = await findTravail(id);
+    if (!travail) return erreur(res, 404, 'Travail introuvable');
+    if (travail.utilisateur_id !== req.utilisateurId) {
+        return erreur(res, 403, "Enseignant connecté, mais le travail ou le créneau visé appartient au cours d’un autre enseignant.");
+    }
+
+    const corps = req.body ?? {};
+    const erreurs = [];
+    const titre = typeof corps.titre === 'string' ? corps.titre.trim() : '';
+    if(titre === ''){
+        erreurs.push('Veuillez inscrire le titre.');
+    }else if(titre.length > 150) {
+        erreurs.push('Le titre ne doit pas dépasser 150 caractères');
+    }
+
+    const description = typeof corps.description === 'string' ? corps.description.trim() : '';
+    if(description === '') {
+        erreurs.push('Veuillez inscrire la description.');
+    }
+    if(corps.type !== 'individuel' && corps.type !== 'equipe'){
+        erreurs.push('Le type doit être soit individuel ou equipe.');
+    }
+
+    const dispo = readDate(corps.diponible);
+    if(!dispo){
+        erreurs.push('La date de disponibilité est invalide.');
+    }
+
+    const remise = readDateHour(corps.remise);
+    if(!remise) {
+        erreurs.push('La date de remise est invalide.');
+    }else if(dispo && remise <= `${dispo} 00:00:00`){
+        erreurs.push('La date de remise doit être après celle de disponibilité.');
+    }
+    if(typeof corps.ouvert !== 'boolean'){
+        erreurs.push("L'état 'ouvert' doit être soit vrai ou faux.");
+    }
+    if(erreurs.length > 0) return res.status(400).json({erreurs});
+
+    await pool.execute('UPDATE travaux SET titre = ?, description = ?, type = ?, disponible = ?, remise = ?, ouvert = ? '+
+        'WHERE id = ?', [titre, description, corps.type, dispo, remise, corps.ouvert ? 1 : 0, id]
+    );
+    res.status(204).end();
+});
+
 export default travauxRouter;
