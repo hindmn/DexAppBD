@@ -137,40 +137,72 @@ travauxRouter.put('/:id', exigerConnexion, async (req, res) => {
     const corps = req.body ?? {};
     const erreurs = [];
     const titre = typeof corps.titre === 'string' ? corps.titre.trim() : '';
-    if(titre === ''){
+    if (titre === '') {
         erreurs.push('Veuillez inscrire le titre.');
-    }else if(titre.length > 150) {
+    } else if (titre.length > 150) {
         erreurs.push('Le titre ne doit pas dépasser 150 caractères');
     }
 
     const description = typeof corps.description === 'string' ? corps.description.trim() : '';
-    if(description === '') {
+    if (description === '') {
         erreurs.push('Veuillez inscrire la description.');
     }
-    if(corps.type !== 'individuel' && corps.type !== 'equipe'){
+    if (corps.type !== 'individuel' && corps.type !== 'equipe') {
         erreurs.push('Le type doit être soit individuel ou equipe.');
     }
 
     const dispo = readDate(corps.diponible);
-    if(!dispo){
+    if (!dispo) {
         erreurs.push('La date de disponibilité est invalide.');
     }
 
     const remise = readDateHour(corps.remise);
-    if(!remise) {
+    if (!remise) {
         erreurs.push('La date de remise est invalide.');
-    }else if(dispo && remise <= `${dispo} 00:00:00`){
+    } else if (dispo && remise <= `${dispo} 00:00:00`) {
         erreurs.push('La date de remise doit être après celle de disponibilité.');
     }
-    if(typeof corps.ouvert !== 'boolean'){
+    if (typeof corps.ouvert !== 'boolean') {
         erreurs.push("L'état 'ouvert' doit être soit vrai ou faux.");
     }
-    if(erreurs.length > 0) return res.status(400).json({erreurs});
+    if (erreurs.length > 0) return res.status(400).json({ erreurs });
 
-    await pool.execute('UPDATE travaux SET titre = ?, description = ?, type = ?, disponible = ?, remise = ?, ouvert = ? '+
+    await pool.execute('UPDATE travaux SET titre = ?, description = ?, type = ?, disponible = ?, remise = ?, ouvert = ? ' +
         'WHERE id = ?', [titre, description, corps.type, dispo, remise, corps.ouvert ? 1 : 0, id]
     );
     res.status(204).end();
+});
+
+travauxRouter.post('/:id/creneaux', exigerConnexion, async (req, res) => {
+    const id = req.params.id;
+    const travail = await findTravail(id);
+    if (!travail) return erreur(res, 404, 'Travail introuvable');
+    if (travail.utilisateur_id !== req.utilisateurId) {
+        return erreur(res, 403, "Le travail visé appartient au cours d’un autre enseignant.");
+    }
+
+    const corps = req.body ?? {};
+    const erreurs = [];
+    const debut = readDateHour(corps.debut);
+    const fin = readDateHour(corps.fin);
+
+    if (!debut) erreurs.push('La date de début est invalide.');
+    if (!fin) erreurs.push('La date de fin est invalide.');
+    if (debut && fin && fin <= debut) erreurs.push('La fin doit être postérieure au début.');
+    if (erreurs.length > 0) { return res.status(400).json({ erreurs }); }
+
+    const [lignes] = await pool.execute('SELECT id FROM creneaux WHERE travail_id = ?', [id]);
+    const prefixe = `${id}-`;
+    const numExistants = lignes.map((l) => l.id).filter((lId) => lId.startsWith(prefixe))
+        .map((lId) => Number(lId.slice(prefixe.length)));
+
+    let numero = 1;
+    while (numExistants.includes(numero)) { numero++; }
+    const newId = prefixe + String(numero).padStart(2, '0');
+
+    await pool.execute('INSERT INTO creneaux (id, travail_id, debut, fin) VALUES (?, ?, ?, ?)', [newId, id, debut, fin]);
+
+    res.status(201).json({id: newId, travail_id: id, debut, fin});
 });
 
 export default travauxRouter;
