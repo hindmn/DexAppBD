@@ -1,4 +1,4 @@
-import { trouverJeton } from "../jetons";
+import { trouverJeton } from "../jetons.js";
 
 export function exigerConnexion(req, res, next){
     const header = req.get('Authorization') ?? '';
