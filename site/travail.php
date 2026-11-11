@@ -11,7 +11,7 @@ require 'includes/entete.php';
 ?>
 
 <p><a href="index.php">Retour à l'accueil</a></p>
-<div id="app" data-travail="<?= htmlspecialchars($idTravail, ENT_QUOTES, 'UTF_8') ?>">
+<div id="app" data-travail="<?= htmlspecialchars($idTravail, ENT_QUOTES, 'UTF-8') ?>">
     <p>Chargement...</p>
 </div>
 

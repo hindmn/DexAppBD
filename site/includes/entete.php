@@ -14,7 +14,7 @@
 
         <nav>
             <a href="index.php">Accueil</a>
-            <a href="admin.php"></a>
+            <a href="admin.php">Administration</a>
         </nav>
     </header>
     <main>
