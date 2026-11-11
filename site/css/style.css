@@ -1,0 +1,166 @@
+:root {
+    --fond: #fbeaea;
+    --blanc: #ffffff;
+    --texte: #2a1f1f;
+    --texte-doux: #6b5e5e;
+    --ligne: #e0d9d7;
+    --principal: #b3261e;
+    --principal-fonce: #8a1c16;
+    --rouge: #a8322d;
+    --succes: #2e6b5a;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+    font-family: "Segoe UI", system-ui, Arial, sans-serif;
+    line-height: 1.5;
+    color: var(--texte);
+    background: var(--fond);
+}
+
+a {
+    color: var(--principal);
+}
+
+h1 {
+    font-size: 2rem;
+    margin: .5rem 0;
+}
+
+h2 {
+    font-size: 1.3rem;
+    margin-top: 2rem;
+}
+
+/* ===== En-tête ===== */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--ligne);
+    margin-bottom: 1.5rem;
+}
+
+header a {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-decoration: none;
+    color: var(--principal);
+}
+
+header p {
+    margin: 0;
+    color: var(--texte-doux);
+}
+
+/* ===== Formulaires ===== */
+form {
+    background: var(--blanc);
+    border: 1px solid var(--ligne);
+    border-radius: .5rem;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+}
+
+label {
+    font-weight: 600;
+    margin-right: .5rem;
+}
+
+input[type="text"],
+select {
+    font: inherit;
+    padding: .4rem .6rem;
+    border: 1px solid #b9bfb3;
+    border-radius: .3rem;
+}
+
+button {
+    font: inherit;
+    font-weight: 600;
+    padding: .5rem 1rem;
+    border: none;
+    border-radius: .3rem;
+    background: var(--principal);
+    color: var(--blanc);
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--principal-fonce);
+}
+
+/* ===== Accueil ===== */
+section ul {
+    list-style: none;
+    padding: 0;
+}
+
+section li {
+    background: var(--blanc);
+    border: 1px solid var(--ligne);
+    border-radius: .5rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: .75rem;
+}
+
+section li h3 {
+    margin: 0 0 .25rem;
+}
+
+section li p {
+    margin: .2rem 0;
+    color: var(--texte-doux);
+}
+
+/* ===== Tableau des créneaux ===== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+th {
+    text-align: left;
+    font-size: .9rem;
+    color: var(--texte-doux);
+    border-bottom: 2px solid var(--ligne);
+    padding: .5rem;
+}
+
+td {
+    padding: .6rem .5rem;
+    border-bottom: 1px solid var(--ligne);
+}
+
+/* ===== Messages ===== */
+.message-succes {
+    background: #e6f1ec;
+    border-left: 4px solid var(--succes);
+    padding: .75rem 1rem;
+    border-radius: .3rem;
+}
+
+.message-erreur {
+    background: #fbeceb;
+    border-left: 4px solid var(--rouge);
+    color: var(--rouge);
+    padding: .75rem 1rem;
+    border-radius: .3rem;
+}
+
+/* ===== Pied de page ===== */
+footer {
+    margin-top: 3rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--ligne);
+    color: var(--texte-doux);
+    font-size: .9rem;
+}
