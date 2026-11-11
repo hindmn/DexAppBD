@@ -21,4 +21,10 @@ connexRouter.post('/connexion', async (req, res) => {
     if(!valide) { return res.status(401).json({ erreurs: ["L'identifiant ou le mot de passe est incorrect."]}); }
     const jeton = creerJeton(utilisateur.id);
     res.json({jeton, nom: utilisateur.nom});
-})
+});
+
+connexRouter.post('/deconnexion', exigerConnexion, (req, res) => {
+    supprimerJeton(req.jeton);
+    res.status(204).end();
+});
+export default connexRouter;
