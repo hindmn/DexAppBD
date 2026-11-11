@@ -46,7 +46,7 @@ travauxRouter.get('/:id/disponibilites', async (req, res) => {
     const id = req.params.id;
     const [travaux] = await pool.execute('SELECT id FROM travaux WHERE id = ?', [id]);
     if (travaux.length === 0) {
-        return erreur(res, 404, 'Travail introuvable');
+        return erreur(res, 404, 'Travail introuvable.');
     }
     const [creneaux] = await pool.execute('SELECT id, debut, fin FROM creneaux WHERE travail_id = ? ORDER BY debut', [id]);
     const [disponibilites] = await pool.execute('SELECT creneau_id, matricule, nom FROM disponibilites WHERE travail_id = ? ORDER BY nom',
@@ -72,17 +72,18 @@ travauxRouter.get('/:id/disponibilites', async (req, res) => {
 travauxRouter.put('/:id/disponibilites/:matricule', async (req, res) => {
     const id = req.params.id;
     const [travaux] = await pool.execute('SELECT id, ouvert FROM travaux WHERE id = ?', [id]);
-    if (travaux.length === 0) { return erreur(res, 404, 'Travail introuvable'); }
-    if (!travaux[0].ouvert) { return erreur(res, 409, 'Travail fermé'); }
+    if (travaux.length === 0) { return erreur(res, 404, 'Travail introuvable.'); }
+    if (!travaux[0].ouvert) { return erreur(res, 409, 'Travail fermé.'); }
 
+    const corps = req.body ?? {};
     const erreurs = [];
     const matricule = (req.params.matricule ?? '').trim();
-    const nom = typeof req.body.nom === 'string' ? req.body.nom.trim() : '';
-    let creneaux = req.body.creneaux;
+    const nom = typeof corps.nom === 'string' ? corps.nom.trim() : '';
+    let creneaux = corps.creneaux;
     if (matricule === '') {
-        erreurs.push('Veuillez inscrire la matricule.')
+        erreurs.push('Veuillez inscrire le matricule.')
     } else if (matricule.length > 20) {
-        erreurs.push('La matricule ne doit pas dépasser 20 caractères.');
+        erreurs.push('Le matricule ne doit pas dépasser 20 caractères.');
     }
     if (nom === '') {
         erreurs.push('Veuillez inscrire le nom.')
@@ -129,9 +130,9 @@ travauxRouter.put('/:id/disponibilites/:matricule', async (req, res) => {
 travauxRouter.put('/:id', exigerConnexion, async (req, res) => {
     const id = req.params.id;
     const travail = await findTravail(id);
-    if (!travail) return erreur(res, 404, 'Travail introuvable');
+    if (!travail) return erreur(res, 404, 'Travail introuvable.');
     if (travail.utilisateur_id !== req.utilisateurId) {
-        return erreur(res, 403, "Enseignant connecté, mais le travail ou le créneau visé appartient au cours d’un autre enseignant.");
+        return erreur(res, 403, "Le travail visé appartient au cours d’un autre enseignant.");
     }
 
     const corps = req.body ?? {};
@@ -151,7 +152,7 @@ travauxRouter.put('/:id', exigerConnexion, async (req, res) => {
         erreurs.push('Le type doit être soit individuel ou equipe.');
     }
 
-    const dispo = readDate(corps.diponible);
+    const dispo = readDate(corps.disponible);
     if (!dispo) {
         erreurs.push('La date de disponibilité est invalide.');
     }
@@ -176,7 +177,7 @@ travauxRouter.put('/:id', exigerConnexion, async (req, res) => {
 travauxRouter.post('/:id/creneaux', exigerConnexion, async (req, res) => {
     const id = req.params.id;
     const travail = await findTravail(id);
-    if (!travail) return erreur(res, 404, 'Travail introuvable');
+    if (!travail) return erreur(res, 404, 'Travail introuvable.');
     if (travail.utilisateur_id !== req.utilisateurId) {
         return erreur(res, 403, "Le travail visé appartient au cours d’un autre enseignant.");
     }

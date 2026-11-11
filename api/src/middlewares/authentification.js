@@ -7,7 +7,7 @@ export function exigerConnexion(req, res, next){
     const info = trouverJeton(jeton);
     if(!info) { return res.status(401).json({erreurs: ['Votre session est invalide ou expirée.']}); }
 
-    req.utilisateutId = info.utilisateutId;
+    req.utilisateurId = info.userId;
     req.jeton = jeton;
     next();
 }
