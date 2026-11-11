@@ -10,10 +10,10 @@ function erreur(res, code, message) {
 travauxRouter.get('/', async (req, res) => {
     const cours = (req.query.cours ?? '').trim();
     let sql = 'SELECT tr.id, tr.cours_id, tr.titre, tr.type, tr.remise, cs.titre AS cours_titre '
-            + 'FROM travaux tr JOIN cours cs ON cs.id = tr.cours_id '
-            + 'WHERE tr.ouvert = 1';
+        + 'FROM travaux tr JOIN cours cs ON cs.id = tr.cours_id '
+        + 'WHERE tr.ouvert = 1';
     const params = [];
-    if(cours !== ''){
+    if (cours !== '') {
         sql += ' AND tr.cours_id = ?';
         params.push(cours);
     }
@@ -30,36 +30,95 @@ travauxRouter.get('/:id', async (req, res) => {
         + 'FROM travaux tr JOIN cours cs ON cs.id = tr.cours_id '
         + 'WHERE tr.id = ?', [id]
     );
-    if(travaux.length === 0){ return erreur(res, 404, 'Travail introuvable.');  }
+    if (travaux.length === 0) { return erreur(res, 404, 'Travail introuvable.'); }
     const travail = travaux[0];
     const [creneaux] = await pool.execute('SELECT id, debut, fin FROM creneaux WHERE travail_id = ? ORDER BY debut', [id]);
-    
-    res.json({...travail, ouvert: Boolean(travail.ouvert), creneaux});
+
+    res.json({ ...travail, ouvert: Boolean(travail.ouvert), creneaux });
 });
 
 //ROUTE 4
-travauxRouter.get('/:id/disponibilites', async(req, res) => {
+travauxRouter.get('/:id/disponibilites', async (req, res) => {
     const id = req.params.id;
     const [travaux] = await pool.execute('SELECT id FROM travaux WHERE id = ?', [id]);
-    if(travaux.length === 0){
+    if (travaux.length === 0) {
         return erreur(res, 404, 'Travail introuvable');
     }
     const [creneaux] = await pool.execute('SELECT id, debut, fin FROM creneaux WHERE travail_id = ? ORDER BY debut', [id]);
     const [disponibilites] = await pool.execute('SELECT creneau_id, matricule, nom FROM disponibilites WHERE travail_id = ? ORDER BY nom',
         [id]
     );
-    const result = creneaux.map((c) => { 
+    const result = creneaux.map((c) => {
         const etudiants = disponibilites.filter((dispo) => dispo.creneau_id === c.id)
-        .map((dispo) => ({matricule: dispo.matricule, nom: dispo.nom}));
-        return { creneauId: c.id,
+            .map((dispo) => ({ matricule: dispo.matricule, nom: dispo.nom }));
+        return {
+            creneauId: c.id,
             debut: c.debut,
             fin: c.fin,
             nombre: etudiants.length,
             noms: etudiants.map((e) => e.nom),
-            etudiants   
+            etudiants
         };
     });
     res.json(result);
 });
 
+
+//Route 5
+travauxRouter.put('/:id/disponibilites/:matricule', async (req, res) => {
+    const id = req.params.id;
+    const [travaux] = await pool.execute('SELECT id, ouvert FROM travaux WHERE id = ?', [id]);
+    if (travaux.length === 0) { return erreur(res, 404, 'Travail introuvable'); }
+    if (!travaux[0].ouvert) { return erreur(res, 409, 'Travail fermé'); }
+
+    const erreurs = [];
+    const matricule = (req.params.matricule ?? '').trim();
+    const nom = typeof req.body.nom === 'string' ? req.body.nom.trim() : '';
+    let creneaux = req.body.creneaux;
+    if(matricule === ''){
+        erreurs.push('Veuillez inscrire la matricule.')
+    }else if(matricule.length > 20){
+        erreurs.push('La matricule ne doit pas dépasser 20 caractères.');
+    }
+    if(nom === ''){
+        erreurs.push('Veuillez inscrire le nom.')
+    }else if(nom.length > 100){
+        erreurs.push('Le nom ne doit pas dépasser 100 caractères.')
+    }
+    if(!Array.isArray(creneaux)) {
+        creneaux = [];
+    }
+    creneaux = [...new Set(creneaux)];
+    if(creneaux.length === 0){
+        erreurs.push('Veuillez sélectionner au moins 1 créneau.');
+    }
+    const [lignesCreneaux] = await pool.execute('SELECT id FROM creneaux WHERE travail_id = ?', [id]);
+    const idCreneaux = lignesCreneaux.map((c) => c.id);
+    for(const c of creneaux){
+        if(!idCreneaux.includes(c)){
+            erreurs.push('Un des créneaux sélectionné est invalide.');
+            break;
+        }
+    }
+    if(erreurs.length > 0){ return res.status(400).json({erreurs}); }
+    const connect = await pool.getConnection();
+    try{
+        await connect.beginTransaction();
+        await connect.execute('DELETE FROM disponibilites WHERE travail_id = ? AND matricule = ?',
+            [id, matricule]
+        );
+        for(const c of creneaux){
+            await connect.execute('INSERT INTO disponibilites (travail_id, creneau_id, matricule, nom) VALUES (?, ?, ?, ?)',
+                [id, c, matricule, nom]
+            );
+        }
+        await connect.commit();
+    }catch(err){
+        await connect.rollback();
+        throw err;
+    }finally{
+        connect.release();
+    }
+    res.status(204).end();
+});
 export default travauxRouter;
