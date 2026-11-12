@@ -73,3 +73,8 @@ export function modifierCreneau(jeton, id, debut, fin) {
 export function supprimerCreneau(jeton, id) {
     return requete(`/creneaux/${encodeURIComponent(id)}`, { methode: 'DELETE', jeton });
 }
+export function modifierTravail(jeton, id, travail) {
+    return requete(`/travaux/${encodeURIComponent(id)}`, {
+        methode: 'PUT', corps: travail, jeton
+    });
+}
