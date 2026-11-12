@@ -33,3 +33,41 @@ async function requete(chemin, {methode = 'GET', corps, jeton} = {}) {
     }
     return donnees;
 }
+
+export function getCours() {
+    return requete('/cours');
+}
+
+export function getTravaux(coursId = ''){
+    const filtre = coursId ? `?cours=${encodeURIComponent(coursId)}` : '';
+    return requete(`/travaux${filtre}`);
+}
+export function getTravail(id){
+    return requete(`/travaux/${encodeURIComponent(id)}`);
+}
+export function getDisponibilites(id){
+    return requete(`/travaux/${encodeURIComponent(id)}`);
+}
+export function enregistrerDispo(id, matricule, nom, creneaux) {
+    return requete(`/travaux/${encodeURIComponent(id)}/disponibilites/${encodeURIComponent(matricule)}`,
+    {methode: 'PUT', corps: {nom, creneaux}});
+}
+export function connexion(identifiant, motDePasse){
+    return requete('/connexion', {methode: 'POST', corps: {identifiant, motDePasse}});
+}
+export function deconnexion(jeton){
+    return requete('/deconnexion', {methode: 'POST', jeton});
+}
+export function getTravauxAdmin(jeton){
+    return requete(`/admin/travaux`, {jeton});
+}
+export function ajoutCreneau(jeton, travailId, debut, fin){
+    return requete(`/travaux/${encodeURIComponent(travailId)}/creneaux`, 
+    {methode: 'POST', corps: {debut, fin}, jeton});
+}
+export function modifierCreneau(jeton, id, debut, fin){
+    return requete(`/creneaux/${encodeURIComponent(id)}`, {methode: 'PUT', corps: {debut, fin}}, jeton);
+}
+export function supprimerCreneau(jeton, id){
+    return requete(`/creneaux/${encodeURIComponent(id)}`, {methode: 'DELETE', jeton});
+}
