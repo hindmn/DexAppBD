@@ -21,7 +21,7 @@ require 'includes/entete.php';
                 <h3>{{t.titre}}</h3>
                 <p>Type : {{t.type}}</p>
                 <p>Remise : {{t.remise}}</p>
-                <a :href="'travail.php?travail=' + encodeURIComponent(t.id)">Voir le travail</a>
+                <a :href="lienTravail(t.id)">Voir le travail</a>
             </li>
         </ul>
     </section>

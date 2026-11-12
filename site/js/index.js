@@ -39,6 +39,10 @@ createApp({
 
         chargerCours();
         chargerTravaux();
-        return { cours, coursChoisi, groupes, messageErreur, chargerTravaux, encodeURIComponent };
+
+        function lienTravail(id){
+            return 'travail.php?travail=' + encodeURIComponent(id);
+        }
+        return { cours, coursChoisi, groupes, messageErreur, chargerTravaux, lienTravail };
     }
 }).mount('#app');
