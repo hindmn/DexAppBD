@@ -7,7 +7,7 @@ require 'includes/entete.php';
     <h1>Accueil</h1>
     <p>
         <label for="cours">Cours</label>
-        <select id="cours" v-model="coursChoisi">
+        <select id="cours" v-model="coursChoisi" @change="chargerTravaux">
             <option value="">Tous les cours</option>
             <option v-for="c in cours" :key="c.id" value="c.id">{{c.id}} {{c.titre}}</option>
         </select>
