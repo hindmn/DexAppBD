@@ -156,6 +156,10 @@ td {
     border-radius: .3rem;
 }
 
+[v-cloak] {
+    display: none;
+}
+
 /* ===== Pied de page ===== */
 footer {
     margin-top: 3rem;

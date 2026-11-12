@@ -1,4 +1,4 @@
-import {createApp, ref, computed} from 'https://unpkg.com/vue@3.5/dist/vue.esm-browser.js';
+import { createApp, ref, computed } from 'https://unpkg.com/vue@3.5/dist/vue.esm-browser.js';
 import { getCours, getTravaux } from './api.js';
 
 createApp({
@@ -8,12 +8,12 @@ createApp({
         const coursChoisi = ref('');
         const messageErreur = ref('');
 
-        const groupes = computed(() =>{
+        const groupes = computed(() => {
             const grpCours = [];
-            for(const t of travaux.value){
+            for (const t of travaux.value) {
                 let groupe = grpCours.find((g) => g.id === t.cours_id);
-                if(!groupe){
-                    groupe = {id: t.cours_id, titre: t.cours_titre, travaux: []};
+                if (!groupe) {
+                    groupe = { id: t.cours_id, titre: t.cours_titre, travaux: [] };
                     grpCours.push(groupe);
                 }
                 groupe.travaux.push(t);
@@ -21,7 +21,7 @@ createApp({
             return grpCours;
         });
         async function chargerTravaux() {
-            messageErreur = '';
+            messageErreur.value = '';
             try {
                 travaux.value = await getTravaux(coursChoisi.value);
             } catch (e) {
@@ -39,6 +39,6 @@ createApp({
 
         chargerCours();
         chargerTravaux();
-        return {cours, coursChoisi, groupes, messageErreur, chargerTravaux, encodeURIComponent};
+        return { cours, coursChoisi, groupes, messageErreur, chargerTravaux, encodeURIComponent };
     }
 }).mount('#app');
